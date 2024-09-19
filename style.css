@@ -1,0 +1,200 @@
+body {
+    display: flex;
+    margin: 0;
+    height: 100vh;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+/* Sidebar container */
+.sidebar {
+    width: 250px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    height: 100vh;
+    transition: transform 0.3s ease;
+    /* Initially, sidebar is visible */
+    transform: translateX(0);
+}
+
+/* When hidden, move the sidebar out of view */
+.sidebar-hidden {
+    transform: translateX(-100%);
+}
+
+/* Icon beside the "CoinGPT" title */
+.sidebar-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Style for the toggle icon */
+.toggle-icon {
+    cursor: pointer;
+    width: 30px; /* Adjust size as needed */
+    height: auto;
+}
+
+.sidebar-logo {
+    width: 40px;
+    height: 40px;
+    margin-right: 10px;
+}
+
+.sidebar-title span {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+
+.chat-container-wrapper {
+    display: flex;
+    flex-grow: 1;
+    height: 100vh;
+    background-color: #212e41;
+}
+
+.chat-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    transition: margin-left 0.3s ease;
+    background-color: white;
+    margin-left: 0; /* Default is no margin when sidebar is visible */
+}
+
+.chat-container-full {
+    margin-left: -250px; /* Offset by the sidebar width */
+}
+
+.chat-history {
+    margin-top: 20px; /* Space from the previous section */
+    background-color: #f8f9fa;
+    border-top: 1px solid #ccc;
+    padding: 10px;
+}
+
+.chat-history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.new-chat-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.new-chat-button:hover {
+    background-color: #45a049;
+}
+
+.chat-history-list {
+    list-style: none;
+    padding: 0;
+}
+
+.chat-history-list li {
+    padding: 5px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+}
+
+.chat-history-list li:last-child {
+    border-bottom: none;
+}
+
+.chat-history-list li:hover {
+    background-color: #f1f1f1;
+}
+
+
+.messages {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    border-bottom: 1px solid #ccc;
+}
+
+.message {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.message-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.message.user-message {
+    justify-content: flex-end;
+}
+
+.message.bot-message {
+    justify-content: flex-start;
+}
+
+.message-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.user-message .message-wrapper {
+    justify-content: flex-end;
+}
+
+.bot-message .message-wrapper {
+    justify-content: flex-start;
+}
+
+.message-text {
+    padding: 10px;
+    background-color: #e0f7fa;
+    border-radius: 5px;
+    color: #00796b;
+}
+
+.bot-message .message-text {
+    background-color: #e8eaf6;
+    color: #303f9f;
+}
+
+.input-container {
+    display: flex;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+}
+
+input[type="text"] {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px 20px;
+    margin-left: 10px;
+    border: none;
+    background-color: #00796b;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #004d40;
+}

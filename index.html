@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coin Chatbot</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-title">
+            <img src="/image/coin.png" alt="Logo" class="sidebar-logo"> 
+            <span>CoinGPT</span>
+            <img src="image/sidebar.png" alt="Toggle Sidebar" class="toggle-icon" id="toggleButton">
+        </div>
+        <div class="chat-history">
+            <div class="chat-history-header">
+                Chat History
+                <button class="new-chat-button" onclick="createNewChat()">+ New Chat</button>
+            </div>
+            <ul class="chat-history-list"></ul>
+        </div>
+    </div>
+    
+    <div class="chat-container" id="chatContainer">
+        <div class="messages" id="messages"></div>
+        <div class="input-container">
+            <input type="text" id="userInput" placeholder="Type your message here..." autofocus>
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+
+    <section>
+        <div class = "wave wave1"></div>
+        <div class = "wave wave2"></div>
+        <div class = "wave wave3"></div>
+        <div class = "wave wave4"></div>
+    </section>
+
+    <script>
+        // Load chat history from sessionStorage on page load
+        window.onload = function() {
+            const savedMessages = sessionStorage.getItem('chatHistory');
+            if (savedMessages) {
+                const messages = JSON.parse(savedMessages);
+                messages.forEach((msg) => addMessage(msg.text, msg.className));
+                scrollToBottom(); // Scroll to the latest message
+            }
+        };
+
+        // Listen for "Enter" key to send message
+        document.getElementById("userInput").addEventListener("keyup", function(event) {
+            if (event.key === "Enter") {  // If "Enter" is pressed
+                sendMessage();  // Call sendMessage function
+            }
+        });
+    
+        // Function to send message to Rasa chatbot
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput').value;
+            if (!userInput) return;
+            
+            addMessage(userInput, 'user-message');
+            saveMessage(userInput, 'user-message'); // Save to sessionStorage
+            document.getElementById('userInput').value = '';
+    
+            try {
+                const response = await fetch('http://localhost:5005/webhooks/rest/webhook', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sender: 'user', message: userInput })
+                });
+    
+                const data = await response.json();
+                data.forEach((message) => {
+                    addMessage(message.text, 'bot-message');
+                    saveMessage(message.text, 'bot-message'); // Save to sessionStorage
+                });
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Error connecting to the chatbot. Please try again.', 'bot-message');
+            }
+    
+            scrollToBottom(); // Scroll to the latest message
+        }
+    
+        // Function to add a message to the chat window
+        function addMessage(text, className) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+            
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = 'message-wrapper';
+
+            const icon = document.createElement('img');
+            icon.src = className === 'user-message' ? '/image/coin.png' : '/image/coin.png'; // Replace with your bot icon path
+            icon.className = 'message-icon';
+
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-text';
+            textDiv.innerText = text;
+
+            if (className === 'user-message') {
+                messageWrapper.appendChild(textDiv);
+                messageWrapper.appendChild(icon);
+            } else {
+                messageWrapper.appendChild(icon);
+                messageWrapper.appendChild(textDiv);
+            }
+            
+            messageDiv.appendChild(messageWrapper);
+            document.getElementById('messages').appendChild(messageDiv);
+        }
+    
+        // Function to save message to sessionStorage
+        function saveMessage(text, className) {
+            const savedMessages = sessionStorage.getItem('chatHistory');
+            const messages = savedMessages ? JSON.parse(savedMessages) : [];
+            messages.push({ text: text, className: className });
+            sessionStorage.setItem('chatHistory', JSON.stringify(messages));
+        }
+    
+        // Function to scroll to the bottom of the chat window
+        function scrollToBottom() {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        //Function to open new chat
+        let chatCounter = -1;  // Start with -1, so we initialize Chat 0 on first message
+        let chatHistory = {};  // Object to store chat messages for each chat
+        let currentChatKey = '';  // Empty initially, will be set when the first message is sent
+
+        // Function to initialize the first chat if no chat exists
+        function initializeChatIfNeeded() {
+            if (currentChatKey === '') {
+                chatCounter++;  // Move to Chat 0
+                currentChatKey = `Chat ${chatCounter}`;
+
+                // Add the first chat to the chat history list
+                const chatList = document.querySelector('.chat-history-list');
+                const newChat = document.createElement('li');
+                newChat.textContent = currentChatKey;
+                newChat.setAttribute('data-chat', currentChatKey);  // Set custom attribute for the chat
+                newChat.onclick = function () {
+                    openChat(this.getAttribute('data-chat'));
+                };
+                chatList.appendChild(newChat);
+            }
+        }
+
+        // Function to create a new chat
+        function createNewChat() {
+            const messagesDiv = document.getElementById('messages');
+
+            // Save the current chat's messages into chatHistory before switching to a new one
+            if (messagesDiv.innerHTML !== '') {
+                chatHistory[currentChatKey] = messagesDiv.innerHTML;
+            }
+
+            // Increment the chat counter and set the new current chat key
+            chatCounter++;
+            currentChatKey = `Chat ${chatCounter}`;
+
+            // Clear the messages container for the new chat
+            messagesDiv.innerHTML = '';
+
+            // Add the new chat to the chat history list
+            const chatList = document.querySelector('.chat-history-list');
+            if (!document.querySelector(`li[data-chat="${currentChatKey}"]`)) {
+                const newChat = document.createElement('li');
+                newChat.textContent = currentChatKey;
+                newChat.setAttribute('data-chat', currentChatKey);  // Use custom attribute to identify the chat
+                newChat.onclick = function () {
+                    openChat(this.getAttribute('data-chat'));
+                };
+                chatList.appendChild(newChat);
+            }
+        }
+
+        // Function to send a message to the chatbot
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput').value;
+            if (!userInput) return;
+
+            // Initialize chat if it's the first message
+            initializeChatIfNeeded();
+
+            // Add the user's message
+            addMessage(userInput, 'user-message');
+            document.getElementById('userInput').value = '';
+
+            try {
+                // Send the message to your backend (Rasa in this case)
+                const response = await fetch('http://localhost:5005/webhooks/rest/webhook', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sender: 'user', message: userInput })
+                });
+
+                const data = await response.json();
+                data.forEach((message) => {
+                    addMessage(message.text, 'bot-message');
+                });
+
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('Error connecting to the chatbot. Please try again.', 'bot-message');
+            }
+
+            // Save the current chat's messages immediately after the message is sent
+            chatHistory[currentChatKey] = document.getElementById('messages').innerHTML;
+
+            scrollToBottom(); // Scroll to the latest message
+        }
+
+        // Function to add a message to the chat window
+        function addMessage(text, className) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${className}`;
+
+            const messageWrapper = document.createElement('div');
+            messageWrapper.className = 'message-wrapper';
+
+            const icon = document.createElement('img');
+            icon.src = className === 'user-message' ? '/image/coin.png' : '/image/coin.png';  // Replace with your bot icon path
+            icon.className = 'message-icon';
+
+            const textDiv = document.createElement('div');
+            textDiv.className = 'message-text';
+            textDiv.innerText = text;
+
+            messageWrapper.appendChild(textDiv);
+            messageWrapper.appendChild(icon);
+            messageDiv.appendChild(messageWrapper);
+            document.getElementById('messages').appendChild(messageDiv);
+
+            // Save the updated chat into chatHistory
+            chatHistory[currentChatKey] = document.getElementById('messages').innerHTML;
+        }
+
+        // Function to open a previous chat
+        function openChat(chatName) {
+            const messagesDiv = document.getElementById('messages');
+
+            // Save the current chat's messages before switching
+            if (messagesDiv.innerHTML !== '') {
+                chatHistory[currentChatKey] = messagesDiv.innerHTML;
+            }
+
+            // Update the current chat key to the selected chat
+            currentChatKey = chatName;
+
+            // Retrieve and display the selected chat's messages from chatHistory
+            if (chatHistory[currentChatKey]) {
+                messagesDiv.innerHTML = chatHistory[currentChatKey];
+            } else {
+                messagesDiv.innerHTML = '';  // If no history, clear the chat window
+            }
+        }
+
+        // Function to scroll to the bottom of the chat window
+        function scrollToBottom() {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+
+        // Add a click event listener to the toggle button
+        // Add a click event listener to the toggle button
+// Add a click event listener to the toggle button
+document.getElementById('toggleButton').addEventListener('click', function () {
+    const sidebar = document.getElementById('sidebar');
+    const chatContainer = document.getElementById('chatContainer');
+
+    // Toggle the sidebar-hidden class to hide/show it
+    sidebar.classList.toggle('sidebar-hidden');
+
+    // Toggle the chat-container-full class to expand/collapse the chat container
+    chatContainer.classList.toggle('chat-container-full');
+});
+
+
+
+
+    </script>
+</body>
+</html>
